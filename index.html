@@ -73,14 +73,16 @@
             cursor: default;
         }
 
-        /* Escudo Inferior Direito: Bloqueia o logo d'água do YouTube */
+        /* Escudo Inferior Direito: Bloqueia o logo do YouTube na barra de controles */
         .shield-bottom-right {
             position: absolute;
-            bottom: 45px;
-            /* Acima da barra de controles */
-            right: 0;
-            width: 150px;
-            height: 60px;
+            bottom: 0;
+            right: 50px;
+            /* Deixa o botão de tela cheia livre */
+            width: 130px;
+            /* Cobre o logo "YouTube" e ícones vizinhos na barra */
+            height: 50px;
+            /* Altura da barra de controles */
             z-index: 10;
             background: transparent;
             cursor: default;
