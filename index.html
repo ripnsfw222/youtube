@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Vídeo Player - Versão API Profissional</title>
+    <title>Vídeo Player - Stealth Mode</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Força o envio de referrer para o YouTube -->
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -29,6 +29,7 @@
 
         /* Container Principal */
         .video-wrapper {
+            position: relative;
             width: 100%;
             max-width: 960px;
             background: #000;
@@ -45,6 +46,8 @@
             padding-bottom: 56.25%;
             height: 0;
             background: #000;
+            /* Impede qualquer seleção de texto indesejada */
+            user-select: none;
         }
 
         #player {
@@ -53,6 +56,49 @@
             left: 0;
             width: 100%;
             height: 100%;
+        }
+
+        /* --- CAMADAS DE BLINDAGEM (SHIELDS) --- */
+
+        /* Escudo Superior: Bloqueia o título, ícone do canal e compartilhar */
+        .shield-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            /* Ajuste para cobrir a área do título */
+            z-index: 10;
+            background: transparent;
+            cursor: default;
+        }
+
+        /* Escudo Inferior Direito: Bloqueia o logo d'água do YouTube */
+        .shield-bottom-right {
+            position: absolute;
+            bottom: 45px;
+            /* Acima da barra de controles */
+            right: 0;
+            width: 150px;
+            height: 60px;
+            z-index: 10;
+            background: transparent;
+            cursor: default;
+        }
+
+        /* Escudo de Fim de Vídeo: Bloqueia a área central no final para evitar cliques em sugestões */
+        .shield-center {
+            position: absolute;
+            top: 60px;
+            bottom: 45px;
+            left: 0;
+            right: 0;
+            z-index: 5;
+            background: transparent;
+            /* Deixamos o centro aberto para permitir o Play/Pause, 
+         mas podemos cobrir se usar controles externos JS */
+            pointer-events: none;
+            /* Deixa passar clique para o player por padrão */
         }
 
         /* Rodapé do Player */
@@ -65,15 +111,6 @@
             border-top: 1px solid #1a1a1a;
             letter-spacing: 0.5px;
         }
-
-        /* Mensagem de Ajuda caso o erro persista */
-        .help-msg {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #444;
-            text-align: center;
-            max-width: 960px;
-        }
     </style>
 </head>
 
@@ -82,30 +119,27 @@
     <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
         <div class="video-wrapper">
             <div class="video-container">
-                <!-- A API do YouTube irá carregar o vídeo aqui dentro do div #player -->
+                <!-- O Player do YouTube -->
                 <div id="player"></div>
+
+                <!-- Blindagens Ativas -->
+                <div class="shield-top" title="Navegação protegida"></div>
+                <div class="shield-bottom-right"></div>
+                <div class="shield-center" id="end-shield"></div>
             </div>
 
             <div class="footer">
-                Video Player Professional Edition
+                Video Player Stealth Edition (Blindado)
             </div>
-        </div>
-
-        <div class="help-msg">
-            Nota: Se o vídeo não carregar, tente abrir este arquivo usando um servidor local (HTTP) ou extensões como
-            "Live Server".
         </div>
     </div>
 
     <script>
-        // 1. Este código carrega a API do IFrame Player de forma assíncrona.
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // 2. Esta função cria o <iframe> (e o player do YouTube)
-        //    após o download do código da API.
         var player;
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
@@ -114,30 +148,36 @@
                 videoId: 'B8t1a4zOPoU',
                 playerVars: {
                     'playsinline': 1,
-                    'rel': 0,
-                    'modestbranding': 1,
-                    'origin': window.location.origin || '*' // Ajuda com problemas de segurança
+                    'rel': 0,            // Sugestões apenas do mesmo canal (ajuda a manter foco)
+                    'modestbranding': 1, // Remove logo grande da barra
+                    'showinfo': 0,       // Esconde info do vídeo (legado, mas útil em alguns players)
+                    'controls': 1,       // Mantemos controles para o usuário conseguir usar o vídeo
+                    'fs': 1,             // Permite tela cheia
+                    'origin': window.location.origin || '*'
                 },
                 events: {
                     'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange,
-                    'onError': onPlayerError
+                    'onStateChange': onPlayerStateChange
                 }
             });
         }
 
         function onPlayerReady(event) {
-            console.log("Player pronto para uso.");
+            console.log("Player Stealth ativado.");
         }
 
         function onPlayerStateChange(event) {
-            // Pode ser usado para monitorar quando o vídeo começa/para
-        }
+            var shield = document.getElementById('end-shield');
 
-        function onPlayerError(event) {
-            console.error("Erro no Player:", event.data);
-            if (event.data === 153) {
-                alert("Ocorreu o Erro 153. Por favor, tente abrir este arquivo através de um servidor local (http://) em vez de abrir direto da pasta (file://).");
+            // Quando o vídeo termina (YT.PlayerState.ENDED = 0)
+            if (event.data === 0) {
+                // Ativamos o escudo central para ninguém clicar em vídeos sugeridos
+                shield.style.pointerEvents = 'auto';
+                shield.style.background = 'rgba(0,0,0,0.1)'; // Opcional: escurece levemente
+            } else {
+                // Durante a reprodução, permitimos interação central (Play/Pause)
+                shield.style.pointerEvents = 'none';
+                shield.style.background = 'transparent';
             }
         }
     </script>
