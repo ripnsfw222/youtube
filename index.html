@@ -73,16 +73,27 @@
             cursor: default;
         }
 
-        /* Escudo Inferior Direito: Bloqueia o logo do YouTube na barra de controles */
+        /* Escudo Inferior Esquerdo: Bloqueia o botão "Assistir no YouTube" do início */
+        .shield-bottom-left {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200px;
+            height: 60px;
+            z-index: 10;
+            background: transparent;
+            cursor: default;
+        }
+
+        /* Escudo Inferior Direito: Bloqueia APENAS o logo "YouTube" na barra */
         .shield-bottom-right {
             position: absolute;
             bottom: 0;
-            right: 50px;
-            /* Deixa o botão de tela cheia livre */
-            width: 130px;
-            /* Cobre o logo "YouTube" e ícones vizinhos na barra */
-            height: 50px;
-            /* Altura da barra de controles */
+            right: 48px;
+            /* Começa logo antes do botão de tela cheia */
+            width: 75px;
+            /* Largura exata para cobrir apenas a palavra "YouTube" */
+            height: 48px;
             z-index: 10;
             background: transparent;
             cursor: default;
@@ -126,6 +137,7 @@
 
                 <!-- Blindagens Ativas -->
                 <div class="shield-top" title="Navegação protegida"></div>
+                <div class="shield-bottom-left"></div>
                 <div class="shield-bottom-right"></div>
                 <div class="shield-center" id="end-shield"></div>
             </div>
