@@ -290,6 +290,7 @@
       aspect-ratio: 16 / 9;
       overflow: hidden;
       background: #000;
+      cursor: pointer;
     }
 
     .thumbnail-wrapper img {
@@ -297,7 +298,7 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      transition: transform 0.5s;
+      transition: transform 0.5s, opacity 0.3s ease;
     }
 
     .video-card:hover .thumbnail-wrapper img {
@@ -324,6 +325,16 @@
       overflow: hidden;
       text-overflow: ellipsis;
       height: 2.94rem;
+    }
+
+    .video-card h4 a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .video-card h4 a:hover {
+      color: var(--accent);
     }
 
     .video-info {
@@ -662,6 +673,50 @@
         max-width: 100%;
       }
     }
+
+    /* PLAYER MODAL SPECIFIC & THEATER MODE */
+    #playerModal .modal-content {
+      max-width: 800px;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+      border-radius: 16px;
+      transition: max-width 0.4s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    #playerModal.theater-mode {
+      padding: 1rem;
+    }
+    
+    #playerModal.theater-mode .modal-content {
+      max-width: 96vw;
+      max-height: 96vh;
+    }
+    
+    .theater-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+    }
+    
+    .theater-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .theater-btn .theater-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font-main);
+    }
   </style>
 </head>
 
@@ -761,6 +816,21 @@
             <button type="submit" class="btn btn-accent">Salvar Vídeo</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PLAYER DE VÍDEO -->
+  <div class="modal" id="playerModal">
+    <div class="modal-content">
+      <div class="modal-header" style="padding: 0.75rem 1.5rem; background: var(--card-bg); border-bottom: 1px solid var(--glass-border); border-radius: 16px 16px 0 0; display: flex; align-items: center; justify-content: space-between;">
+        <button id="btnTheater" class="theater-btn" onclick="toggleTheaterMode()" title="Alternar Modo Teatro">
+          <span class="theater-icon">🎭</span> <span class="theater-text">Modo Teatro</span>
+        </button>
+        <button class="close-btn" onclick="closePlayerModal()">✕</button>
+      </div>
+      <div class="player-container" style="position: relative; width: 100%; aspect-ratio: 16 / 9;">
+        <iframe id="youtubePlayer" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
       </div>
     </div>
   </div>
@@ -1018,13 +1088,15 @@
         const card = document.createElement('div');
         card.className = 'video-card';
         card.innerHTML = `
-          <div class="thumbnail-wrapper">
-            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" rel="noopener noreferrer">
-              <img src="${thumbnail}" alt="${title}">
-            </a>
+          <div class="thumbnail-wrapper" 
+               data-video-id="${videoId}"
+               onmouseenter="startThumbnailPreview(this)" 
+               onmouseleave="stopThumbnailPreview(this)"
+               onclick="openPlayerModal('${videoId}', '${title.replace(/'/g, "\\'")}')">
+            <img src="${thumbnail}" alt="${title}">
           </div>
           <div class="card-body">
-            <h4>${title}</h4>
+            <h4><a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none; transition: color 0.2s;">${title}</a></h4>
             <div class="video-info">
               <div class="channel-row">
                 👤 ${channelsList.map(ch => `<a href="#" class="channel-link">${ch}</a>`).join(' | ')}
@@ -1367,7 +1439,102 @@
       }
     }
 
+    // Controla o Modal do Player de Vídeo
+    const playerModal = document.getElementById('playerModal');
+    const youtubePlayer = document.getElementById('youtubePlayer');
 
+    function openPlayerModal(videoId, videoTitle) {
+      if (activePreviewIframe) {
+        stopThumbnailPreview(activePreviewIframe.parentElement);
+      }
+      youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+      playerModal.classList.add('active');
+    }
+
+    function closePlayerModal() {
+      playerModal.classList.remove('active');
+      playerModal.classList.remove('theater-mode');
+      youtubePlayer.src = '';
+      
+      // Reset button text
+      const btnTheater = document.getElementById('btnTheater');
+      if (btnTheater) {
+        const theaterIcon = btnTheater.querySelector('.theater-icon');
+        const theaterText = btnTheater.querySelector('.theater-text');
+        if (theaterIcon) theaterIcon.textContent = '🎭';
+        if (theaterText) theaterText.textContent = 'Modo Teatro';
+      }
+    }
+
+    function toggleTheaterMode() {
+      const btnTheater = document.getElementById('btnTheater');
+      const theaterIcon = btnTheater.querySelector('.theater-icon');
+      const theaterText = btnTheater.querySelector('.theater-text');
+      
+      const isTheater = playerModal.classList.toggle('theater-mode');
+      if (isTheater) {
+        theaterIcon.textContent = '📺';
+        theaterText.textContent = 'Modo Padrão';
+      } else {
+        theaterIcon.textContent = '🎭';
+        theaterText.textContent = 'Modo Teatro';
+      }
+    }
+
+    // Controle de Prévia de Vídeo ao passar o mouse (Hover Preview)
+    let hoverTimeout = null;
+    let activePreviewIframe = null;
+
+    function startThumbnailPreview(wrapper) {
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+      const videoId = wrapper.getAttribute('data-video-id');
+      if (!videoId) return;
+
+      // Delay de 600ms para evitar disparos acidentais ao rolar a página
+      hoverTimeout = setTimeout(() => {
+        if (activePreviewIframe) {
+          stopThumbnailPreview(activePreviewIframe.parentElement);
+        }
+
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&disablekb=1&loop=1&playlist=${videoId}`;
+        iframe.style.position = 'absolute';
+        iframe.style.top = '0';
+        iframe.style.left = '0';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.pointerEvents = 'none'; // Cliques passam direto para o wrapper
+        iframe.style.zIndex = '1';
+        iframe.setAttribute('allow', 'autoplay; encrypted-media');
+        
+        const img = wrapper.querySelector('img');
+        if (img) img.style.opacity = '0';
+        
+        wrapper.appendChild(iframe);
+        activePreviewIframe = iframe;
+      }, 600);
+    }
+
+    function stopThumbnailPreview(wrapper) {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+        hoverTimeout = null;
+      }
+      if (!wrapper) return;
+      
+      const iframe = wrapper.querySelector('iframe');
+      if (iframe) {
+        iframe.remove();
+      }
+      
+      const img = wrapper.querySelector('img');
+      if (img) img.style.opacity = '1';
+      
+      if (activePreviewIframe === iframe) {
+        activePreviewIframe = null;
+      }
+    }
 
     /* --- INICIALIZAÇÃO --- */
 
