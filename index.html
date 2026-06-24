@@ -1093,7 +1093,7 @@
       
       // Regex para encontrar o ID em URLs
       const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
         /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/
       ];
       
@@ -1298,6 +1298,13 @@
       
       if (!videoId) {
         showAlert('ID ou URL do vídeo inválida!', 'error');
+        return;
+      }
+
+      // Validação de duplicatas (evita cadastrar o mesmo vídeo mais de uma vez)
+      const duplicateIndex = allVideos.findIndex(v => v.id === videoId);
+      if (duplicateIndex >= 0 && duplicateIndex !== editingIndex) {
+        showAlert('Este vídeo já está cadastrado no catálogo!', 'error');
         return;
       }
 
